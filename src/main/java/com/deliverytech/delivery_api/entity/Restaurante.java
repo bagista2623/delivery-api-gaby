@@ -1,8 +1,17 @@
 package com.deliverytech.delivery_api.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "restaurantes")
 public class Restaurante {
 
     @Id
@@ -10,48 +19,28 @@ public class Restaurante {
     private Long id;
 
     private String nome;
+
     private String categoria;
+
+    private String endereco;
+
     private String telefone;
-    private boolean ativo = true;
 
-    // === Getters e Setters ===
-    public Long getId() {
-        return id;
-    }
+    private String cnpj;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    private String horarioFuncionamento; // Ex: "08:00 - 18:00"
 
-    public String getNome() {
-        return nome;
-    }
+    private String faixaPreco; // Ex: "$", "$$", "$$$"
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
+    private String descricao;
 
-    public String getCategoria() {
-        return categoria;
-    }
+    @Column(name = "data_cadastro")
+    private LocalDateTime dataCadastro;
 
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
+    @Column(nullable = true)
+    private Boolean ativo;
 
-    public String getTelefone() {
-        return telefone;
-    }
-
-    public void setTelefone(String telefone) {
-        this.telefone = telefone;
-    }
-
-    public boolean isAtivo() {
-        return ativo;
-    }
-
-    public void setAtivo(boolean ativo) {
-        this.ativo = ativo;
+    public void inativar() {
+        this.ativo = false;
     }
 }

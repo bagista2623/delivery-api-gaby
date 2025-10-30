@@ -4,61 +4,57 @@ import com.deliverytech.delivery_api.entity.Restaurante;
 import com.deliverytech.delivery_api.repository.RestauranteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-@Transactional
 public class RestauranteService {
 
     @Autowired
     private RestauranteRepository restauranteRepository;
 
+    // ✅ Corrigido: agora seta ativo=true e dataCadastro
     public Restaurante cadastrar(Restaurante restaurante) {
+        restaurante.setAtivo(true);
+        restaurante.setDataCadastro(LocalDateTime.now());
         return restauranteRepository.save(restaurante);
     }
 
-    public List<Restaurante> listarTodos() {
-        return restauranteRepository.findAll();
-    }
-
-    public List<Restaurante> buscarPorNome(String valor) {
-        return restauranteRepository.findByNomeContainingIgnoreCase(valor);
-    }
-
-    public List<Restaurante> buscarPorCategoria(String valor) {
-        return restauranteRepository.findByCategoriaContainingIgnoreCase(valor);
-    }
-
-    public List<Restaurante> buscarAtivos() {
+    public List<Restaurante> listarAtivos() {
         return restauranteRepository.findByAtivoTrue();
     }
 
-    public Restaurante atualizar(Long id, Restaurante restauranteAtualizado) {
-        Optional<Restaurante> optionalRestaurante = restauranteRepository.findById(id);
+    public Optional<Restaurante> buscarPorId(Long id) {
+        return restauranteRepository.findByIdAndAtivoTrue(id);
+    }
 
-        if (optionalRestaurante.isPresent()) {
-            Restaurante restaurante = optionalRestaurante.get();
-            restaurante.setNome(restauranteAtualizado.getNome());
-            restaurante.setCategoria(restauranteAtualizado.getCategoria());
-            restaurante.setTelefone(restauranteAtualizado.getTelefone());
-            return restauranteRepository.save(restaurante);
-        } else {
-            throw new RuntimeException("Restaurante não encontrado");
-        }
+    public List<Restaurante> buscarPorNome(String nome) {
+        return restauranteRepository.findByNomeContainingIgnoreCaseAndAtivoTrue(nome);
+    }
+
+    public List<Restaurante> buscarPorCategoria(String categoria) {
+        return restauranteRepository.findByCategoriaContainingIgnoreCaseAndAtivoTrue(categoria);
+    }
+
+    public Restaurante atualizar(Long id, Restaurante restauranteAtualizado) {
+        Restaurante restauranteExistente = restauranteRepository.findByIdAndAtivoTrue(id)
+                .orElseThrow(() -> new IllegalArgumentException("Restaurante não encontrado"));
+
+        restauranteExistente.setNome(restauranteAtualizado.getNome());
+        restauranteExistente.setCategoria(restauranteAtualizado.getCategoria());
+        restauranteExistente.setEndereco(restauranteAtualizado.getEndereco());
+        restauranteExistente.setTelefone(restauranteAtualizado.getTelefone());
+
+        return restauranteRepository.save(restauranteExistente);
     }
 
     public void inativar(Long id) {
-        Optional<Restaurante> optionalRestaurante = restauranteRepository.findById(id);
+        Restaurante restaurante = restauranteRepository.findByIdAndAtivoTrue(id)
+                .orElseThrow(() -> new IllegalArgumentException("Restaurante não encontrado"));
 
-        if (optionalRestaurante.isPresent()) {
-            Restaurante restaurante = optionalRestaurante.get();
-            restaurante.setAtivo(false);
-            restauranteRepository.save(restaurante);
-        } else {
-            throw new RuntimeException("Restaurante não encontrado");
-        }
+        restaurante.setAtivo(false);
+        restauranteRepository.save(restaurante);
     }
 }
