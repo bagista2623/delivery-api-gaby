@@ -1,5 +1,6 @@
 package com.deliverytech.delivery_api.controller;
 
+import com.deliverytech.delivery_api.dto.ClienteRequestDTO;
 import com.deliverytech.delivery_api.entity.Cliente;
 import com.deliverytech.delivery_api.service.ClienteService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ public class ClienteController {
 
     // Cadastrar novo cliente
     @PostMapping
-    public ResponseEntity<?> cadastrar(@Validated @RequestBody Cliente cliente) {
+    public ResponseEntity<?> cadastrar(@Validated @RequestBody ClienteRequestDTO cliente) {
         try {
             Cliente novoCliente = clienteService.cadastrar(cliente);
             return ResponseEntity.status(HttpStatus.CREATED).body(novoCliente);
@@ -33,6 +34,13 @@ public class ClienteController {
         }
     }
 
+    public Cliente cadastrar(ClienteRequestDTO cliente){
+
+    if (clienteRepository.existsByEmail(cliente.getEmail())) {
+        throw new IllegalArgumentException("Email já cadastrado:" + cliente.getEmail());
+    }
+
+    }
     // Listar todos os clientes ativos
     @GetMapping
     public ResponseEntity<List<Cliente>> listar() {

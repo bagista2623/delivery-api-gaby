@@ -1,12 +1,13 @@
 package com.deliverytech.delivery_api.controller;
 
-import com.deliverytech.delivery_api.entity.Restaurante;
+import com.deliverytech.delivery_api.dto.RestauranteRequestDTO;
+import com.deliverytech.delivery_api.dto.RestauranteResponseDTO;
 import com.deliverytech.delivery_api.service.RestauranteService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,41 +21,38 @@ public class RestauranteController {
     private RestauranteService restauranteService;
 
     @PostMapping
-    public ResponseEntity<?> cadastrar(@Validated @RequestBody Restaurante restaurante) {
+    public ResponseEntity<?> cadastrar(@Valid @RequestBody RestauranteRequestDTO dto) {
         try {
-            Restaurante novo = restauranteService.cadastrar(restaurante);
+            RestauranteResponseDTO novo = restauranteService.cadastrar(dto);
             return ResponseEntity.status(HttpStatus.CREATED).body(novo);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro interno do servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno do servidor");
         }
     }
 
     @GetMapping
-    public ResponseEntity<List<Restaurante>> listar() {
+    public ResponseEntity<List<RestauranteResponseDTO>> listar() {
         return ResponseEntity.ok(restauranteService.listarAtivos());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
-        Optional<Restaurante> restaurante = restauranteService.buscarPorId(id);
+        Optional<RestauranteResponseDTO> restaurante = restauranteService.buscarPorId(id);
         return restaurante.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizar(@PathVariable Long id,
-                                       @Validated @RequestBody Restaurante restaurante) {
+    public ResponseEntity<?> atualizar(@PathVariable Long id, @Valid @RequestBody RestauranteRequestDTO dto) {
         try {
-            Restaurante atualizado = restauranteService.atualizar(id, restaurante);
+            RestauranteResponseDTO atualizado = restauranteService.atualizar(id, dto);
             return ResponseEntity.ok(atualizado);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro interno do servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno do servidor");
         }
     }
 
@@ -66,18 +64,17 @@ public class RestauranteController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro interno do servidor");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno do servidor");
         }
     }
 
     @GetMapping("/buscar")
-    public ResponseEntity<List<Restaurante>> buscarPorNome(@RequestParam String nome) {
+    public ResponseEntity<List<RestauranteResponseDTO>> buscarPorNome(@RequestParam String nome) {
         return ResponseEntity.ok(restauranteService.buscarPorNome(nome));
     }
 
     @GetMapping("/categoria")
-    public ResponseEntity<List<Restaurante>> buscarPorCategoria(@RequestParam String categoria) {
+    public ResponseEntity<List<RestauranteResponseDTO>> buscarPorCategoria(@RequestParam String categoria) {
         return ResponseEntity.ok(restauranteService.buscarPorCategoria(categoria));
     }
 }

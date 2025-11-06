@@ -1,53 +1,58 @@
 package com.deliverytech.delivery_api.service;
 
+import com.deliverytech.delivery_api.dto.RestauranteRequestDTO;
+import com.deliverytech.delivery_api.dto.RestauranteResponseDTO;
 import com.deliverytech.delivery_api.entity.Restaurante;
 import com.deliverytech.delivery_api.repository.RestauranteRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class RestauranteService {
 
     @Autowired
     private RestauranteRepository restauranteRepository;
 
-    // ✅ Corrigido: agora seta ativo=true e dataCadastro
-    public Restaurante cadastrar(Restaurante restaurante) {
-        restaurante.setAtivo(true);
+    public RestauranteResponseDTO cadastrar(RestauranteRequestDTO dto) {
+        Restaurante restaurante = new Restaurante();
+        restaurante.setNome(dto.getNome());
+        restaurante.setEndereco(dto.getEndereco());
+        restaurante.setEspecialidade(dto.getEspecialidade());
         restaurante.setDataCadastro(LocalDateTime.now());
-        return restauranteRepository.save(restaurante);
+        restaurante.setAtivo(true);
+        Restaurante salvo = restauranteRepository.save(restaurante);
+        return new RestauranteResponseDTO(salvo);
     }
 
-    public List<Restaurante> listarAtivos() {
-        return restauranteRepository.findByAtivoTrue();
+    public List<RestauranteResponseDTO> listarAtivos() {
+        return restauranteRepository.findByAtivoTrue()
+                .stream()
+                .map(RestauranteResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
-    public Optional<Restaurante> buscarPorId(Long id) {
-        return restauranteRepository.findByIdAndAtivoTrue(id);
+    public Optional<RestauranteResponseDTO> buscarPorId(Long id) {
+        return restauranteRepository.findByIdAndAtivoTrue(id)
+                .map(RestauranteResponseDTO::new);
     }
 
-    public List<Restaurante> buscarPorNome(String nome) {
-        return restauranteRepository.findByNomeContainingIgnoreCaseAndAtivoTrue(nome);
-    }
-
-    public List<Restaurante> buscarPorCategoria(String categoria) {
-        return restauranteRepository.findByCategoriaContainingIgnoreCaseAndAtivoTrue(categoria);
-    }
-
-    public Restaurante atualizar(Long id, Restaurante restauranteAtualizado) {
-        Restaurante restauranteExistente = restauranteRepository.findByIdAndAtivoTrue(id)
+    public RestauranteResponseDTO atualizar(Long id, RestauranteRequestDTO dto) {
+        Restaurante restaurante = restauranteRepository.findByIdAndAtivoTrue(id)
                 .orElseThrow(() -> new IllegalArgumentException("Restaurante não encontrado"));
 
-        restauranteExistente.setNome(restauranteAtualizado.getNome());
-        restauranteExistente.setCategoria(restauranteAtualizado.getCategoria());
-        restauranteExistente.setEndereco(restauranteAtualizado.getEndereco());
-        restauranteExistente.setTelefone(restauranteAtualizado.getTelefone());
+        restaurante.setNome(dto.getNome());
+        restaurante.setEndereco(dto.getEndereco());
+        restaurante.setEspecialidade(dto.getEspecialidade());
 
-        return restauranteRepository.save(restauranteExistente);
+        Restaurante atualizado = restauranteRepository.save(restaurante);
+        return new RestauranteResponseDTO(atualizado);
     }
 
     public void inativar(Long id) {
@@ -56,5 +61,19 @@ public class RestauranteService {
 
         restaurante.setAtivo(false);
         restauranteRepository.save(restaurante);
+    }
+
+    public List<RestauranteResponseDTO> buscarPorNome(String nome) {
+        return restauranteRepository.findByNomeContainingIgnoreCaseAndAtivoTrue(nome)
+                .stream()
+                .map(RestauranteResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<RestauranteResponseDTO> buscarPorCategoria(String categoria) {
+        return restauranteRepository.findByCategoriaContainingIgnoreCaseAndAtivoTrue(categoria)
+                .stream()
+                .map(RestauranteResponseDTO::new)
+                .collect(Collectors.toList());
     }
 }

@@ -1,52 +1,121 @@
 package com.deliverytech.delivery_api.service;
 
+import com.deliverytech.delivery_api.dto.ItemPedidoDTO;
+import com.deliverytech.delivery_api.dto.PedidoRequestDTO;
+import com.deliverytech.delivery_api.dto.PedidoResponseDTO;
 import com.deliverytech.delivery_api.entity.Pedido;
+import com.deliverytech.delivery_api.repository.ClienteRepository;
 import com.deliverytech.delivery_api.repository.PedidoRepository;
+import com.deliverytech.delivery_api.repository.ProdutoRepository;
+import com.deliverytech.delivery_api.repository.RestauranteRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PedidoService {
 
-    private final PedidoRepository pedidoRepository;
+    @Autowired
+    private PedidoRepository pedidoRepository;
 
-    public PedidoService(PedidoRepository pedidoRepository) {
-        this.pedidoRepository = pedidoRepository;
+    @Autowired
+    private ClienteRepository clienteRepository;
+
+    @Autowired
+    private RestauranteRepository restauranteRepository;
+
+    @Autowired
+    private ProdutoRepository produtoRepository;
+
+    public List<PedidoResponseDTO> listarPedidosAtivos() {
+        return pedidoRepository.findByAtivoTrue()
+                .stream()
+                .map(PedidoResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
-    public List<Pedido> listarPedidosAtivos() {
-        return pedidoRepository.findByAtivoTrue();
-    }
-
-    public Optional<Pedido> buscarPorId(Long id) {
+    public Optional<PedidoResponseDTO> buscarPorId(Long id) {
         return pedidoRepository.findById(id)
-                .filter(Pedido::isAtivo);
+                .filter(Pedido::isAtivo)
+                .map(PedidoResponseDTO::new);
     }
 
-    public List<Pedido> buscarPorDescricao(String descricao) {
-        return pedidoRepository.findByDescricaoContainingIgnoreCase(descricao);
+    public List<PedidoResponseDTO> buscarPorDescricao(String descricao) {
+        return pedidoRepository.findByDescricaoContainingIgnoreCase(descricao)
+                .stream()
+                .map(PedidoResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
-    public Pedido criar(Pedido pedido) {
-        return pedidoRepository.save(pedido);
+    @Transactional
+    public PedidoResponseDTO criarPedido(PedidoRequestDTO dto) {
+        // Validação básica
+        var cliente = clienteRepository.findById(dto.getClienteId())
+                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+
+        var restaurante = restauranteRepository.findById(dto.getRestauranteId())
+                .orElseThrow(() -> new IllegalArgumentException("Restaurante não encontrado"));
+
+        // Validação e cálculo de total
+        double total = calcularTotalPedido(dto.getItens());
+
+        Pedido pedido = new Pedido();
+        pedido.setDescricao("Pedido do cliente " + cliente.getNome());
+        pedido.setTotal(total);
+        pedido.setAtivo(true);
+        pedido.setCliente(cliente);
+        pedido.setRestaurante(restaurante);
+        pedido.setEnderecoEntrega(dto.getEnderecoEntrega());
+
+        Pedido salvo = pedidoRepository.save(pedido);
+
+        return new PedidoResponseDTO(salvo);
     }
 
-    public Optional<Pedido> atualizar(Long id, Pedido novoPedido) {
+    public void atualizarStatusPedido(Long id, String status) {
+        Pedido pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
+
+        pedido.setStatus(status); // ou enum se tiver
+        pedidoRepository.save(pedido);
+    }
+
+    public List<PedidoResponseDTO> buscarPedidosPorCliente(Long clienteId) {
+        return pedidoRepository.findByClienteIdAndAtivoTrue(clienteId)
+                .stream()
+                .map(PedidoResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public Double calcularTotalPedido(List<ItemPedidoDTO> itens) {
+        return itens.stream()
+                .mapToDouble(i -> {
+                    var produto = produtoRepository.findById(i.getProdutoId())
+                            .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
+                    return produto.getPreco() * i.getQuantidade();
+                })
+                .sum();
+    }
+
+    public void cancelarPedido(Long id) {
+        Pedido pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
+
+        pedido.setAtivo(false);
+        pedidoRepository.save(pedido);
+    }
+
+    public Optional<PedidoResponseDTO> atualizar(Long id, PedidoRequestDTO dto) {
         return pedidoRepository.findById(id).map(p -> {
-            p.setDescricao(novoPedido.getDescricao());
-            p.setTotal(novoPedido.getTotal());
-            p.setAtivo(novoPedido.isAtivo());
-            return pedidoRepository.save(p);
+            p.setDescricao("Atualizado");
+            p.setTotal(calcularTotalPedido(dto.getItens()));
+            p.setEnderecoEntrega(dto.getEnderecoEntrega());
+            Pedido atualizado = pedidoRepository.save(p);
+            return new PedidoResponseDTO(atualizado);
         });
-    }
-
-    public boolean excluir(Long id) {
-        return pedidoRepository.findById(id).map(p -> {
-            p.setAtivo(false);
-            pedidoRepository.save(p);
-            return true;
-        }).orElse(false);
     }
 }
