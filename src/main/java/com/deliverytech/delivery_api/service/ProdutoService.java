@@ -1,5 +1,7 @@
 package com.deliverytech.delivery_api.service;
 
+import com.deliverytech.delivery_api.dto.ProdutoRequestDTO;
+import com.deliverytech.delivery_api.dto.ProdutoResponseDTO;
 import com.deliverytech.delivery_api.entity.Produto;
 import com.deliverytech.delivery_api.repository.ProdutoRepository;
 import jakarta.transaction.Transactional;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -16,72 +19,63 @@ public class ProdutoService {
     @Autowired
     private ProdutoRepository produtoRepository;
 
-    /**
-     * Cadastrar novo produto
-     */
-    public Produto cadastrar(Produto produto) {
-        validarDadosProduto(produto);
+    public ProdutoResponseDTO cadastrar(ProdutoRequestDTO dto) {
+        validarDados(dto);
+        Produto produto = new Produto();
+        produto.setNome(dto.getNome());
+        produto.setDescricao(dto.getDescricao());
+        produto.setPreco(dto.getPreco());
         produto.setAtivo(true);
-        return produtoRepository.save(produto);
+
+        Produto salvo = produtoRepository.save(produto);
+        return new ProdutoResponseDTO(salvo);
     }
 
-    /**
-     * Buscar produto por ID
-     */
-    @Transactional
-    public Optional<Produto> buscarPorId(Long id) {
-        return produtoRepository.findById(id);
+    public Optional<ProdutoResponseDTO> buscarPorId(Long id) {
+        return produtoRepository.findById(id)
+                .filter(Produto::getAtivo)
+                .map(ProdutoResponseDTO::new);
     }
 
-    /**
-     * Listar produtos ativos
-     */
-    @Transactional
-    public List<Produto> listarAtivos() {
-        return produtoRepository.findByAtivoTrue();
+    public List<ProdutoResponseDTO> listarAtivos() {
+        return produtoRepository.findByAtivoTrue()
+                .stream()
+                .map(ProdutoResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Buscar produtos por nome
-     */
-    @Transactional
-    public List<Produto> buscarPorNome(String nome) {
-        return produtoRepository.findByNomeContainingIgnoreCase(nome);
+    public List<ProdutoResponseDTO> buscarPorNome(String nome) {
+        return produtoRepository.findByNomeContainingIgnoreCase(nome)
+                .stream()
+                .map(ProdutoResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Atualizar produto
-     */
-    public Produto atualizar(Long id, Produto produtoAtualizado) {
-        Produto produto = buscarPorId(id)
+    public ProdutoResponseDTO atualizar(Long id, ProdutoRequestDTO dto) {
+        Produto produto = produtoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + id));
 
-        produto.setNome(produtoAtualizado.getNome());
-        produto.setDescricao(produtoAtualizado.getDescricao());
-        produto.setPreco(produtoAtualizado.getPreco());
+        produto.setNome(dto.getNome());
+        produto.setDescricao(dto.getDescricao());
+        produto.setPreco(dto.getPreco());
 
-        return produtoRepository.save(produto);
+        Produto atualizado = produtoRepository.save(produto);
+        return new ProdutoResponseDTO(atualizado);
     }
 
-    /**
-     * Inativar produto (soft delete)
-     */
     public void inativar(Long id) {
-        Produto produto = buscarPorId(id)
+        Produto produto = produtoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + id));
 
         produto.setAtivo(false);
         produtoRepository.save(produto);
     }
 
-    /**
-     * Validação de dados
-     */
-    private void validarDadosProduto(Produto produto) {
-        if (produto.getNome() == null || produto.getNome().trim().isEmpty()) {
+    private void validarDados(ProdutoRequestDTO dto) {
+        if (dto.getNome() == null || dto.getNome().trim().isEmpty()) {
             throw new IllegalArgumentException("Nome do produto é obrigatório");
         }
-        if (produto.getPreco() == null || produto.getPreco().doubleValue() <= 0) {
+        if (dto.getPreco() == null || dto.getPreco() <= 0) {
             throw new IllegalArgumentException("Preço do produto deve ser maior que zero");
         }
     }
