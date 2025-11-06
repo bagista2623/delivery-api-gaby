@@ -1,86 +1,82 @@
-package com.deliverytech.delivery_api.controller;
+package com.deliverytech.delivery_api.service;
 
+import com.deliverytech.delivery_api.dto.ProdutoRequestDTO;
+import com.deliverytech.delivery_api.dto.ProdutoResponseDTO;
 import com.deliverytech.delivery_api.entity.Produto;
-import com.deliverytech.delivery_api.service.ProdutoService;
+import com.deliverytech.delivery_api.repository.ProdutoRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-@RestController
-@RequestMapping("/produtos")
-@CrossOrigin(origins = "*")
-public class ProdutoController {
+@Service
+@Transactional
+public class ProdutoService {
 
     @Autowired
-    private ProdutoService produtoService;
+    private ProdutoRepository produtoRepository;
 
-    // Cadastrar novo produto
-    @PostMapping
-    public ResponseEntity<?> cadastrar(@Validated @RequestBody Produto produto) {
-        try {
-            Produto novoProduto = produtoService.cadastrar(produto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(novoProduto);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro interno do servidor");
+    public ProdutoResponseDTO cadastrar(ProdutoRequestDTO dto) {
+        validarDados(dto);
+        Produto produto = new Produto();
+        produto.setNome(dto.getNome());
+        produto.setDescricao(dto.getDescricao());
+        produto.setPreco(dto.getPreco());
+        produto.setAtivo(true);
+
+        Produto salvo = produtoRepository.save(produto);
+        return new ProdutoResponseDTO(salvo);
+    }
+
+    public Optional<ProdutoResponseDTO> buscarPorId(Long id) {
+        return produtoRepository.findById(id)
+                .filter(Produto::getAtivo)
+                .map(ProdutoResponseDTO::new);
+    }
+
+    public List<ProdutoResponseDTO> listarAtivos() {
+        return produtoRepository.findByAtivoTrue()
+                .stream()
+                .map(ProdutoResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProdutoResponseDTO> buscarPorNome(String nome) {
+        return produtoRepository.findByNomeContainingIgnoreCase(nome)
+                .stream()
+                .map(ProdutoResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public ProdutoResponseDTO atualizar(Long id, ProdutoRequestDTO dto) {
+        Produto produto = produtoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + id));
+
+        produto.setNome(dto.getNome());
+        produto.setDescricao(dto.getDescricao());
+        produto.setPreco(dto.getPreco());
+
+        Produto atualizado = produtoRepository.save(produto);
+        return new ProdutoResponseDTO(atualizado);
+    }
+
+    public void inativar(Long id) {
+        Produto produto = produtoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + id));
+
+        produto.setAtivo(false);
+        produtoRepository.save(produto);
+    }
+
+    private void validarDados(ProdutoRequestDTO dto) {
+        if (dto.getNome() == null || dto.getNome().trim().isEmpty()) {
+            throw new IllegalArgumentException("Nome do produto é obrigatório");
         }
-    }
-
-    // Listar todos os produtos ativos
-    @GetMapping
-    public ResponseEntity<List<Produto>> listar() {
-        List<Produto> produtos = produtoService.listarAtivos();
-        return ResponseEntity.ok(produtos);
-    }
-
-    // Buscar produto por ID
-    @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
-        Optional<Produto> produto = produtoService.buscarPorId(id);
-        return produto.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    // Atualizar produto
-    @PutMapping("/{id}")
-    public ResponseEntity<?> atualizar(@PathVariable Long id,
-                                       @Validated @RequestBody Produto produto) {
-        try {
-            Produto atualizado = produtoService.atualizar(id, produto);
-            return ResponseEntity.ok(atualizado);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro interno do servidor");
+        if (dto.getPreco() == null || dto.getPreco() <= 0) {
+            throw new IllegalArgumentException("Preço do produto deve ser maior que zero");
         }
-    }
-
-    // Inativar produto (soft delete)
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> inativar(@PathVariable Long id) {
-        try {
-            produtoService.inativar(id);
-            return ResponseEntity.ok("Produto inativado com sucesso");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro interno do servidor");
-        }
-    }
-
-    // Buscar produto por nome
-    @GetMapping("/buscar")
-    public ResponseEntity<List<Produto>> buscarPorNome(@RequestParam String nome) {
-        List<Produto> produtos = produtoService.buscarPorNome(nome);
-        return ResponseEntity.ok(produtos);
     }
 }
