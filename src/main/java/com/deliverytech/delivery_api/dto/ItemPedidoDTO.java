@@ -1,6 +1,7 @@
 package com.deliverytech.delivery_api.dto;
-
 import jakarta.validation.constraints.NotNull;
+
+
 import lombok.Data;
 
 @Data

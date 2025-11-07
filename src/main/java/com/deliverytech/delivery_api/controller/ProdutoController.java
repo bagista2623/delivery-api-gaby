@@ -1,82 +1,56 @@
-package com.deliverytech.delivery_api.service;
+package com.deliverytech.delivery_api.controller;
 
 import com.deliverytech.delivery_api.dto.ProdutoRequestDTO;
 import com.deliverytech.delivery_api.dto.ProdutoResponseDTO;
-import com.deliverytech.delivery_api.entity.Produto;
-import com.deliverytech.delivery_api.repository.ProdutoRepository;
-import jakarta.transaction.Transactional;
+import com.deliverytech.delivery_api.service.ProdutoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-@Service
-@Transactional
-public class ProdutoService {
+@RestController
+@RequestMapping("/api/produtos")
+public class ProdutoController {
 
     @Autowired
-    private ProdutoRepository produtoRepository;
+    private ProdutoService produtoService;
 
-    public ProdutoResponseDTO cadastrar(ProdutoRequestDTO dto) {
-        validarDados(dto);
-        Produto produto = new Produto();
-        produto.setNome(dto.getNome());
-        produto.setDescricao(dto.getDescricao());
-        produto.setPreco(dto.getPreco());
-        produto.setAtivo(true);
-
-        Produto salvo = produtoRepository.save(produto);
-        return new ProdutoResponseDTO(salvo);
+    @PostMapping
+    public ResponseEntity<ProdutoResponseDTO> cadastrar(@RequestBody ProdutoRequestDTO dto) {
+        ProdutoResponseDTO produto = produtoService.cadastrar(dto);
+        return ResponseEntity.ok(produto);
     }
 
-    public Optional<ProdutoResponseDTO> buscarPorId(Long id) {
-        return produtoRepository.findById(id)
-                .filter(Produto::getAtivo)
-                .map(ProdutoResponseDTO::new);
+    @GetMapping
+    public ResponseEntity<List<ProdutoResponseDTO>> listarAtivos() {
+        List<ProdutoResponseDTO> produtos = produtoService.listarAtivos();
+        return ResponseEntity.ok(produtos);
     }
 
-    public List<ProdutoResponseDTO> listarAtivos() {
-        return produtoRepository.findByAtivoTrue()
-                .stream()
-                .map(ProdutoResponseDTO::new)
-                .collect(Collectors.toList());
+    @GetMapping("/{id}")
+    public ResponseEntity<ProdutoResponseDTO> buscarPorId(@PathVariable Long id) {
+        return produtoService.buscarPorId(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    public List<ProdutoResponseDTO> buscarPorNome(String nome) {
-        return produtoRepository.findByNomeContainingIgnoreCase(nome)
-                .stream()
-                .map(ProdutoResponseDTO::new)
-                .collect(Collectors.toList());
+    @GetMapping("/buscar")
+    public ResponseEntity<List<ProdutoResponseDTO>> buscarPorNome(@RequestParam String nome) {
+        List<ProdutoResponseDTO> produtos = produtoService.buscarPorNome(nome);
+        return ResponseEntity.ok(produtos);
     }
 
-    public ProdutoResponseDTO atualizar(Long id, ProdutoRequestDTO dto) {
-        Produto produto = produtoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + id));
-
-        produto.setNome(dto.getNome());
-        produto.setDescricao(dto.getDescricao());
-        produto.setPreco(dto.getPreco());
-
-        Produto atualizado = produtoRepository.save(produto);
-        return new ProdutoResponseDTO(atualizado);
+    @PutMapping("/{id}")
+    public ResponseEntity<ProdutoResponseDTO> atualizar(@PathVariable Long id, @RequestBody ProdutoRequestDTO dto) {
+        ProdutoResponseDTO produto = produtoService.atualizar(id, dto);
+        return ResponseEntity.ok(produto);
     }
 
-    public void inativar(Long id) {
-        Produto produto = produtoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + id));
-
-        produto.setAtivo(false);
-        produtoRepository.save(produto);
-    }
-
-    private void validarDados(ProdutoRequestDTO dto) {
-        if (dto.getNome() == null || dto.getNome().trim().isEmpty()) {
-            throw new IllegalArgumentException("Nome do produto é obrigatório");
-        }
-        if (dto.getPreco() == null || dto.getPreco() <= 0) {
-            throw new IllegalArgumentException("Preço do produto deve ser maior que zero");
-        }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> inativar(@PathVariable Long id) {
+        produtoService.inativar(id);
+        return ResponseEntity.noContent().build();
     }
 }

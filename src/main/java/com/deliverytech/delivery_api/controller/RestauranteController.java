@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/restaurantes")
+@RequestMapping("/api/restaurantes")
 @CrossOrigin(origins = "*")
 public class RestauranteController {
 
@@ -37,11 +37,10 @@ public class RestauranteController {
         return ResponseEntity.ok(restauranteService.listarAtivos());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
-        Optional<RestauranteResponseDTO> restaurante = restauranteService.buscarPorId(id);
-        return restaurante.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping("/{id}/taxa-entrega/{cep}")
+    public ResponseEntity<Double> calcularTaxaEntrega(@PathVariable Long id, @PathVariable String cep) {
+        double taxa = restauranteService.calcularTaxaEntrega(id, cep);
+        return ResponseEntity.ok(taxa);
     }
 
     @PutMapping("/{id}")

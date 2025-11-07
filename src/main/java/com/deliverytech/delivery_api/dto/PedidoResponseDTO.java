@@ -15,6 +15,6 @@ public class PedidoResponseDTO {
         this.id = pedido.getId();
         this.descricao = pedido.getDescricao();
         this.total = pedido.getTotal();
-        this.ativo = pedido.isAtivo();
+        this.ativo = pedido.getAtivo();
     }
 }

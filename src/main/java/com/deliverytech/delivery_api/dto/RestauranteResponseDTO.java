@@ -9,14 +9,14 @@ public class RestauranteResponseDTO {
     private Long id;
     private String nome;
     private String endereco;
-    private String especialidade;
+    private String categoria;
     private Boolean ativo;
 
     public RestauranteResponseDTO(Restaurante restaurante) {
         this.id = restaurante.getId();
         this.nome = restaurante.getNome();
         this.endereco = restaurante.getEndereco();
-        this.especialidade = restaurante.getEspecialidade();
+        this.categoria = restaurante.getCategoria();
         this.ativo = restaurante.getAtivo();
     }
 }

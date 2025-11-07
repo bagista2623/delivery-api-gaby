@@ -24,7 +24,7 @@ public class RestauranteService {
         Restaurante restaurante = new Restaurante();
         restaurante.setNome(dto.getNome());
         restaurante.setEndereco(dto.getEndereco());
-        restaurante.setEspecialidade(dto.getEspecialidade());
+        restaurante.setCategoria(dto.getCategoria());
         restaurante.setDataCadastro(LocalDateTime.now());
         restaurante.setAtivo(true);
         Restaurante salvo = restauranteRepository.save(restaurante);
@@ -49,7 +49,7 @@ public class RestauranteService {
 
         restaurante.setNome(dto.getNome());
         restaurante.setEndereco(dto.getEndereco());
-        restaurante.setEspecialidade(dto.getEspecialidade());
+        restaurante.setCategoria(dto.getCategoria());
 
         Restaurante atualizado = restauranteRepository.save(restaurante);
         return new RestauranteResponseDTO(atualizado);
@@ -76,4 +76,24 @@ public class RestauranteService {
                 .map(RestauranteResponseDTO::new)
                 .collect(Collectors.toList());
     }
+
+    public double calcularTaxaEntrega(Long restauranteId, String cep) {
+        // Exemplo simples: taxa varia conforme o final do CEP
+        if (cep.endsWith("0") || cep.endsWith("5")) {
+            return 8.99;
+        } else {
+            return 5.99;
+        }
+    }
+    public interface IRestauranteService {
+        RestauranteResponseDTO cadastrar(RestauranteRequestDTO dto);
+        List<RestauranteResponseDTO> listarAtivos();
+        Optional<RestauranteResponseDTO> buscarPorId(Long id);
+        RestauranteResponseDTO atualizar(Long id, RestauranteRequestDTO dto);
+        void inativar(Long id);
+        List<RestauranteResponseDTO> buscarPorNome(String nome);
+        List<RestauranteResponseDTO> buscarPorCategoria(String categoria);
+        double calcularTaxaEntrega(Long restauranteId, String cep);
+    }
+
 }
