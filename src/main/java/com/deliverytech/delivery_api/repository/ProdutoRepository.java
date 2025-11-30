@@ -9,9 +9,11 @@ import java.util.List;
 @Repository
 public interface ProdutoRepository extends JpaRepository<Produto, Long> {
 
-    // Buscar produtos ativos
     List<Produto> findByAtivoTrue();
 
-    // Buscar produtos por nome (contendo)
-    List<Produto> findByNomeContainingIgnoreCase(String nome);
+    List<Produto> findByNomeContainingIgnoreCaseAndAtivoTrue(String nome);
+
+    List<Produto> findByCategoriaContainingIgnoreCaseAndAtivoTrue(String categoria);
+
+    List<Produto> findByRestauranteIdAndAtivoTrue(Long restauranteId);
 }

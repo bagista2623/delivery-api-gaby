@@ -13,6 +13,7 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     List<Pedido> findByDescricaoContainingIgnoreCase(String descricao);
 
-    // 🔹 Novo método que o PedidoService usa
     List<Pedido> findByClienteIdAndAtivoTrue(Long clienteId);
+
+    List<Pedido> findByRestauranteIdAndAtivoTrue(Long restauranteId);
 }

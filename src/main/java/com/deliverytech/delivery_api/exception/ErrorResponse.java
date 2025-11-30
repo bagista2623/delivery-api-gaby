@@ -1,4 +1,21 @@
-package com.deliverytech.delivery_api.exceptions;
+package com.deliverytech.delivery_api.dto;
 
+import lombok.Builder;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+@Data
+@Builder
 public class ErrorResponse {
+
+    private LocalDateTime timestamp;
+    private int status;
+    private String error;
+    private String message;
+    private String path;
+
+    // Detalhes específicos (ex.: campos inválidos)
+    private Map<String, String> details;
 }

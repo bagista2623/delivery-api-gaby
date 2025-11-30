@@ -4,18 +4,24 @@ import com.deliverytech.delivery_api.dto.ItemPedidoDTO;
 import com.deliverytech.delivery_api.dto.PedidoRequestDTO;
 import com.deliverytech.delivery_api.dto.PedidoResponseDTO;
 import com.deliverytech.delivery_api.entity.Pedido;
+import com.deliverytech.delivery_api.entity.Usuario;
+import com.deliverytech.delivery_api.enums.Role;
 import com.deliverytech.delivery_api.enums.StatusPedido;
 import com.deliverytech.delivery_api.repository.ClienteRepository;
 import com.deliverytech.delivery_api.repository.PedidoRepository;
 import com.deliverytech.delivery_api.repository.ProdutoRepository;
-import java.util.UUID;
 import com.deliverytech.delivery_api.repository.RestauranteRepository;
+import com.deliverytech.delivery_api.security.SecurityUtils;
+
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,32 +39,62 @@ public class PedidoService {
     @Autowired
     private ProdutoRepository produtoRepository;
 
-    // 🔹 Listar pedidos ativos
-    public List<PedidoResponseDTO> listarPedidosAtivos() {
-        return pedidoRepository.findByAtivoTrue()
-                .stream()
+    @Autowired
+    private SecurityUtils securityUtils;
+
+
+
+    // ============================================================
+    // LISTAR COM FILTROS + PAGINAÇÃO
+    // ============================================================
+    public Page<PedidoResponseDTO> listarComFiltros(
+            String status,
+            LocalDate dataInicio,
+            LocalDate dataFim,
+            int page,
+            int size
+    ) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+
+        List<Pedido> lista = pedidoRepository.findByAtivoTrue();
+
+        if (status != null && !status.isBlank()) {
+            lista = lista.stream()
+                    .filter(p -> p.getStatus().name().equalsIgnoreCase(status))
+                    .collect(Collectors.toList());
+        }
+
+        if (dataInicio != null) {
+            lista = lista.stream()
+                    .filter(p -> p.getDataCriacao().toLocalDate().isAfter(dataInicio.minusDays(1)))
+                    .collect(Collectors.toList());
+        }
+
+        if (dataFim != null) {
+            lista = lista.stream()
+                    .filter(p -> p.getDataCriacao().toLocalDate().isBefore(dataFim.plusDays(1)))
+                    .collect(Collectors.toList());
+        }
+
+        List<PedidoResponseDTO> dtoList = lista.stream()
                 .map(PedidoResponseDTO::new)
                 .collect(Collectors.toList());
+
+        int start = Math.min(page * size, dtoList.size());
+        int end = Math.min(start + size, dtoList.size());
+
+        return new PageImpl<>(dtoList.subList(start, end), pageable, dtoList.size());
     }
 
-    // 🔹 Buscar pedido por ID
-    public Optional<PedidoResponseDTO> buscarPorId(Long id) {
-        return pedidoRepository.findById(id)
-                .filter(p -> Boolean.TRUE.equals(p.getAtivo()))
-                .map(PedidoResponseDTO::new);
-    }
 
-    // 🔹 Buscar pedidos por descrição
-    public List<PedidoResponseDTO> buscarPorDescricao(String descricao) {
-        return pedidoRepository.findByDescricaoContainingIgnoreCase(descricao)
-                .stream()
-                .map(PedidoResponseDTO::new)
-                .collect(Collectors.toList());
-    }
 
-    // 🔹 Criar novo pedido
+    // ============================================================
+    // CRIAR PEDIDO
+    // ============================================================
     @Transactional
     public PedidoResponseDTO criarPedido(PedidoRequestDTO dto) {
+
         var cliente = clienteRepository.findById(dto.getClienteId())
                 .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
 
@@ -68,37 +104,35 @@ public class PedidoService {
         double total = calcularTotalPedido(dto.getItens());
 
         Pedido pedido = new Pedido();
-        pedido.setDescricao("Pedido do cliente " + cliente.getNome());
-        pedido.setTotal(total);
-        pedido.setAtivo(true);
         pedido.setCliente(cliente);
         pedido.setRestaurante(restaurante);
+        pedido.setTotal(total);
         pedido.setEnderecoEntrega(dto.getEnderecoEntrega());
+        pedido.setDescricao("Pedido do cliente " + cliente.getNome());
         pedido.setNumeroPedido(UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        pedido.setStatus(StatusPedido.PENDENTE); // 🔹 Status inicial padrão
+        pedido.setStatus(StatusPedido.PENDENTE);
+        pedido.setAtivo(true);
 
         Pedido salvo = pedidoRepository.save(pedido);
         return new PedidoResponseDTO(salvo);
     }
 
-    // 🔹 Atualizar status do pedido
-    public void atualizarStatusPedido(Long id, String status) {
-        Pedido pedido = pedidoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
 
-        try {
-            // Converte String para Enum (ex: "ENTREGUE" → StatusPedido.ENTREGUE)
-            pedido.setStatus(StatusPedido.valueOf(status.toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(
-                    "Status inválido! Use: PENDENTE, CONFIRMADO, PREPARANDO, SAIU_PARA_ENTREGA, ENTREGUE ou CANCELADO"
-            );
-        }
 
-        pedidoRepository.save(pedido);
+    // ============================================================
+    // BUSCAR POR ID
+    // ============================================================
+    public Optional<PedidoResponseDTO> buscarPorId(Long id) {
+        return pedidoRepository.findById(id)
+                .filter(p -> Boolean.TRUE.equals(p.getAtivo()))
+                .map(PedidoResponseDTO::new);
     }
 
-    // 🔹 Buscar pedidos por cliente ativo
+
+
+    // ============================================================
+    // BUSCAR POR CLIENTE
+    // ============================================================
     public List<PedidoResponseDTO> buscarPedidosPorCliente(Long clienteId) {
         return pedidoRepository.findByClienteIdAndAtivoTrue(clienteId)
                 .stream()
@@ -106,7 +140,23 @@ public class PedidoService {
                 .collect(Collectors.toList());
     }
 
-    // 🔹 Calcular total do pedido
+
+
+    // ============================================================
+    // BUSCAR POR RESTAURANTE
+    // ============================================================
+    public List<PedidoResponseDTO> buscarPedidosPorRestaurante(Long restauranteId) {
+        return pedidoRepository.findByRestauranteIdAndAtivoTrue(restauranteId)
+                .stream()
+                .map(PedidoResponseDTO::new)
+                .collect(Collectors.toList());
+    }
+
+
+
+    // ============================================================
+    // CALCULAR TOTAL DO PEDIDO
+    // ============================================================
     public Double calcularTotalPedido(List<ItemPedidoDTO> itens) {
         return itens.stream()
                 .mapToDouble(i -> {
@@ -117,24 +167,71 @@ public class PedidoService {
                 .sum();
     }
 
-    // 🔹 Cancelar pedido (inativar)
-    public void cancelarPedido(Long id) {
+
+
+    // ============================================================
+    // ATUALIZAR STATUS
+    // ============================================================
+    public void atualizarStatusPedido(Long id, String status) {
+
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
 
-        pedido.setAtivo(false);
-        pedido.setStatus(StatusPedido.CANCELADO); // 🔹 Atualiza o status também
+        try {
+            pedido.setStatus(StatusPedido.valueOf(status.toUpperCase()));
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "Status inválido. Use: PENDENTE, CONFIRMADO, PREPARANDO, SAIU_PARA_ENTREGA, ENTREGUE, CANCELADO"
+            );
+        }
+
         pedidoRepository.save(pedido);
     }
 
-    // 🔹 Atualizar informações de um pedido
-    public Optional<PedidoResponseDTO> atualizar(Long id, PedidoRequestDTO dto) {
-        return pedidoRepository.findById(id).map(p -> {
-            p.setDescricao("Pedido atualizado de " + p.getCliente().getNome());
-            p.setTotal(calcularTotalPedido(dto.getItens()));
-            p.setEnderecoEntrega(dto.getEnderecoEntrega());
-            Pedido atualizado = pedidoRepository.save(p);
-            return new PedidoResponseDTO(atualizado);
-        });
+
+
+    // ============================================================
+    // CANCELAR PEDIDO
+    // ============================================================
+    public void cancelarPedido(Long id) {
+
+        Pedido pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
+
+        pedido.setStatus(StatusPedido.CANCELADO);
+        pedido.setAtivo(false);
+
+        pedidoRepository.save(pedido);
+    }
+
+
+
+    // ============================================================
+    // AUTORIZAÇÃO — VERSÃO SEM ENTREGADOR
+    // ============================================================
+    public boolean canAccess(Long pedidoId) {
+
+        Usuario user = securityUtils.getCurrentUser();
+        if (user == null) return false;
+
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElse(null);
+        if (pedido == null) return false;
+
+        // ADMIN pode tudo
+        if (user.getRole() == Role.ADMIN) return true;
+
+        switch (user.getRole()) {
+
+            case CLIENTE:
+                return pedido.getCliente().getId().equals(user.getId());
+
+            case RESTAURANTE:
+                return pedido.getRestaurante() != null &&
+                        pedido.getRestaurante().getId().equals(user.getRestauranteId());
+
+            default:
+                return false;
+        }
     }
 }
