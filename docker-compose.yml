@@ -2,20 +2,6 @@ version: '3.8'
 
 services:
 
-  postgres:
-    image: postgres:15
-    container_name: postgres_delivery
-    environment:
-      POSTGRES_DB: deliverydb
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - delivery_network
-
   redis:
     image: redis:7
     container_name: redis_delivery
@@ -30,17 +16,11 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - postgres
       - redis
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/deliverydb
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: admin
+      SPRING_PROFILES_ACTIVE: prod
     networks:
       - delivery_network
-
-volumes:
-  postgres_data:
 
 networks:
   delivery_network:

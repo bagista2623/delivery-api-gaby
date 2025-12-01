@@ -34,9 +34,9 @@ public class ProdutoController {
     private final ProdutoService produtoService;
 
 
-    // ------------------------------------
+
     // POST – Criar produto
-    // ------------------------------------
+
     @PostMapping
     @Operation(
             summary = "Criar um novo produto",
@@ -56,9 +56,9 @@ public class ProdutoController {
     }
 
 
-    // ------------------------------------
+
     // GET – Listar todos produtos
-    // ------------------------------------
+
     @GetMapping
     @Operation(
             summary = "Listar todos os produtos",
@@ -69,9 +69,9 @@ public class ProdutoController {
     }
 
 
-    // ------------------------------------
+
     // GET – Buscar por ID
-    // ------------------------------------
+
     @GetMapping("/{id}")
     @Operation(
             summary = "Buscar produto por ID",
@@ -127,7 +127,7 @@ public class ProdutoController {
 
 
     // ------------------------------------
-    // DELETE – Excluir (Soft Delete)
+    // DELETE – Excluir
     // ------------------------------------
     @DeleteMapping("/{id}")
     @Operation(

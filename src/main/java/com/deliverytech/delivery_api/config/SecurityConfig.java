@@ -19,9 +19,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    // ⚠️ IMPORTANTE: NÃO ter JwtAuthenticationFilter como atributo aqui.
-    // NADA de: private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
     private static final String[] SWAGGER_WHITELIST = {
             "/v3/api-docs/**",
             "/v3/api-docs",
@@ -32,7 +29,6 @@ public class SecurityConfig {
             "/swagger-config",
             "/webjars/**"
     };
-
 
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/auth/login",
@@ -50,9 +46,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> {})
+                .headers(headers -> headers.frameOptions(frame -> frame.disable())) // ✔ Habilita H2 no Docker
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER_WHITELIST).permitAll()
+                        .requestMatchers("/h2-console/**").permitAll() // ✔ Libera console H2
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 );

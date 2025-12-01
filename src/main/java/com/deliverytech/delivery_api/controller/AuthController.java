@@ -34,9 +34,8 @@ public class AuthController {
     private final SecurityUtils securityUtils;
 
 
-    // ============================================================
+
     // POST - REGISTRO
-    // ============================================================
     @PostMapping("/register")
     @Operation(
             summary = "Registrar um novo usuário",
@@ -59,9 +58,9 @@ public class AuthController {
     }
 
 
-    // ============================================================
+
     // POST - LOGIN
-    // ============================================================
+
     @PostMapping("/login")
     @Operation(
             summary = "Autenticar usuário",
@@ -84,9 +83,9 @@ public class AuthController {
     }
 
 
-    // ============================================================
+
     // GET - USUÁRIO LOGADO
-    // ============================================================
+
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     @Operation(

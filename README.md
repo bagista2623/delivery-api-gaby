@@ -1,8 +1,8 @@
--Delivery API — Documentação Completa (Roteiros 1 ao 10)
+# Delivery API — Documentação Completa (Roteiros 1 ao 10)
 
-Este repositório reúne todo o desenvolvimento da Delivery API, seguindo os 10 roteiros propostos em aula, desde a configuração inicial até o deploy via Docker.
+Este repositório reúne todo o desenvolvimento da Delivery API, seguindo os 10 roteiros da disciplina, desde a criação do projeto até a execução via Docker.
 
--- Sumário
+# Sumário
 
 Roteiro 1 – Preparação do Ambiente
 
@@ -12,222 +12,173 @@ Roteiro 3 – Health Check e H2
 
 Roteiro 4 – Estrutura MVC e DTOs
 
-Roteiro 5 – CRUD de Cliente
+Roteiro 5 – CRUD Cliente
 
-Roteiro 6 – Módulos Produto, Restaurante e Pedido
+Roteiro 6 – Produto, Restaurante e Pedido
 
 Roteiro 7 – Endpoints Extras e Regras
 
-Roteiro 8 – Documentação com Swagger
+Roteiro 8 – Swagger
 
-Roteiro 9 – Padronização e Ajustes Finais
+Roteiro 9 – Padronização
 
-Roteiro 10 – Dockerfile e Docker Compose
+Roteiro 10 – Docker
 
 Como rodar
 
 Console H2
 
-Tecnologias utilizadas
+Tecnologias
 
-📘 Roteiro 1 – Preparação do Ambiente
-
-Objetivo: preparar todas as ferramentas para iniciar o desenvolvimento.
-
-Atividades realizadas:
+### Roteiro 1 – Preparação do Ambiente
 
 Instalação do JDK 21
 
-Instalação do IntelliJ IDEA
+Instalação do IntelliJ
 
 Configuração do Maven
 
 Instalação do Git e criação do repositório
 
-Teste do primeiro commit
+Primeiro commit
 
-📘 Roteiro 2 – Criação do Projeto
-
-Objetivo: criar o projeto base usando Spring Boot.
-
-Atividades realizadas:
+### Roteiro 2 – Criação do Projeto
 
 Geração do projeto no Spring Initializr
 
-Adição das dependências:
+Dependências principais: Web, JPA, H2, Lombok, Validation
 
-Spring Web
+Criação do pacote base
 
-Spring Data JPA
+Teste inicial da aplicação
 
-H2 Database
-
-Lombok
-
-Validation
-
-Criação do pacote base com.deliverytech.delivery_api
-
-📘 Roteiro 3 – Configuração do H2 + Health Check
-
-Objetivo: validar a inicialização da API e configurar o banco em memória.
-
-Atividades realizadas:
+### Roteiro 3 – Health Check e H2
 
 Criação do endpoint /health
 
-Configuração completa do H2
+Configuração do H2 no application.properties
 
-Teste do console H2
+Acesso ao console H2
 
-Ajustes no application.properties
+Geração automática das tabelas
 
-Verificação da criação automática de tabelas
+### Roteiro 4 – Estrutura MVC e DTOs
 
-📘 Roteiro 4 – Estrutura MVC e Criação dos DTOs
+Criação das camadas: controller, service, repository, entity, dto
 
-Objetivo: organizar o projeto seguindo boas práticas.
+DTOs de Cliente
 
-Pastas criadas:
+Entidade Cliente
 
-controller
+ClienteRepository
 
-service
+### Roteiro 5 – CRUD Cliente
 
-repository
+Cadastro
 
-entity
-
-dto
-
-Atividades realizadas:
-
-Implementação dos DTOs de Cliente
-
-Criação da entidade Cliente
-
-Criação do repositório ClienteRepository
-
-📘 Roteiro 5 – CRUD Completo de Cliente
-
-Objetivo: implementar o CRUD completo do módulo Cliente.
-
-Atividades realizadas:
-
-Endpoint para cadastrar clientes
-
-Listagem de todos clientes ativos
+Listagem
 
 Busca por ID
 
-Atualização de dados
+Atualização
 
 Inativação (soft delete)
 
-Validações importantes no Service
+Validações no Service
 
-📘 Roteiro 6 – Módulos Produto, Restaurante e Pedido
+### Roteiro 6 – Produto, Restaurante e Pedido
 
-Objetivo: criar os demais módulos seguindo o mesmo padrão de Cliente.
+Criação das entidades
 
-Atividades realizadas:
+DTOs de request e response
 
-Criação das entidades Produto, Restaurante e Pedido
+Services e Controllers
 
-Criação dos DTOs de Request e Response
+Relacionamentos (ex.: Restaurante → Produtos)
 
-Criação dos Services e Controllers
+Regras básicas de negócio
 
-Configuração dos relacionamentos
-
-Regras iniciais de negócio (ex.: estoque, valores)
-
-📘 Roteiro 7 – Endpoints Extras e Regras de Negócio
-
-Objetivo: complementar o projeto com funcionalidades avançadas.
-
-Atividades realizadas:
+### Roteiro 7 – Endpoints Extras e Regras
 
 Busca de produtos por nome
 
-Listagem de produtos por restaurante
+Listagem por restaurante
 
 Busca de clientes por nome
 
-Filtro de pedidos por status
+Filtro de pedidos
 
-Cálculo automático de valores
+Cálculo de valores
 
-Implementação de soft delete em todas as entidades
+Soft delete aplicado em todas as entidades
 
-Ajustes nos DTOs e validações
+### Roteiro 8 – Swagger
 
-📘 Roteiro 8 – Documentação com Swagger
+Integração com SpringDoc OpenAPI
 
-Objetivo: gerar documentação automática da API.
+Acesso: http://localhost:8080/swagger-ui.html
 
-Atividades realizadas:
+Organização dos endpoints
 
-Configuração do SpringDoc no projeto
+### Roteiro 9 – Padronização e Ajustes
 
-Documentação dos endpoints
-
-Organização e padronização das respostas
-
-📘 Roteiro 9 – Padronização, Refatoração e README
-
-Objetivo: corrigir detalhes finais do código.
-
-Atividades realizadas:
-
-Ajustes gerais nos Services e Controllers
+Refatoração geral
 
 Padronização das respostas HTTP
 
-Melhorias nos nomes de variáveis e DTOs
+Melhoria dos DTOs
 
-Organização das camadas
+Ajustes nos services e controllers
 
-Criação deste README completo
+Criação do README
 
-📘 Roteiro 10 – Dockerfile e Docker Compose
-
-Objetivo: preparar o projeto para rodar em containers.
-
-Atividades realizadas:
+### Roteiro 10 – Docker
 
 Criação do Dockerfile
 
 Criação do docker-compose.yml
 
-Configuração dos serviços necessários
-
 Build e execução dos containers
 
-Teste completo da aplicação rodando via Docker
+Testes com a API rodando via Docker
 
-▶ Como rodar o projeto (sem Docker)
-
-Windows:
-
+###  Como rodar o projeto (sem Docker)
+Windows
 mvnw.cmd spring-boot:run
 
-
-Linux / WSL:
-
+Linux/WSL
 ./mvnw spring-boot:run
 
-🗄 Console H2
+### Como rodar o projeto (com Docker)
+Build da imagem
+docker build -t delivery-api-gaby .
 
-Configuração usada:
+Executar com Docker Compose
+docker compose up --build
+
+
+Aplicação:
+
+http://localhost:8080
+
+
+Swagger:
+
+http://localhost:8080/swagger-ui.html
+
+🗄 Console H2
 
 JDBC URL: jdbc:h2:mem:deliverydb
 
 Usuário: sa
 
-Senha: vazio
+Senha: (vazio)
 
-🛠 Tecnologias utilizadas
+Acesso:
+
+http://localhost:8080/h2-console
+
+### 🛠 Tecnologias utilizadas
 
 Java 21
 
@@ -241,7 +192,7 @@ Maven
 
 Lombok
 
-Swagger
+Swagger / SpringDoc
 
 Docker
 
