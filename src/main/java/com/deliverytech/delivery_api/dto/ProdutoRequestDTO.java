@@ -4,8 +4,10 @@ import com.deliverytech.delivery_api.validation.ValidCategoria;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 @Schema(name = "ProdutoRequestDTO",
         description = "Modelo de dados enviado para cadastrar ou atualizar um produto.")
 public class ProdutoRequestDTO {

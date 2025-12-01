@@ -3,6 +3,7 @@ package com.deliverytech.delivery_api.entity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,8 +12,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "produtos")
+@Builder
 @Schema(name = "Produto", description = "Entidade que representa um produto vinculado a um restaurante.")
 public class Produto {
+
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -12,10 +12,11 @@ import com.deliverytech.delivery_api.security.SecurityUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,7 +30,9 @@ public class ProdutoService {
 
     // ------------------------------------
     // CRIAR PRODUTO
+    // Invalida todo o cache ao criar
     // ------------------------------------
+    @CacheEvict(value = "produtosCache", allEntries = true)
     public ProdutoResponseDTO criar(ProdutoRequestDTO dto) {
 
         Restaurante restaurante = restauranteService
@@ -49,7 +52,9 @@ public class ProdutoService {
 
     // ------------------------------------
     // LISTAR TODOS (ATIVOS)
+    // Usa cache da lista de produtos
     // ------------------------------------
+    @Cacheable(value = "produtosCache", key = "'listaTodos'")
     public List<ProdutoResponseDTO> listar() {
         return produtoRepository.findByAtivoTrue()
                 .stream()
@@ -59,7 +64,9 @@ public class ProdutoService {
 
     // ------------------------------------
     // BUSCAR POR ID
+    // Cada produto tem seu próprio cache
     // ------------------------------------
+    @Cacheable(value = "produtosCache", key = "#id")
     public ProdutoResponseDTO buscarPorId(Long id) {
         Produto produto = produtoRepository.findById(id)
                 .filter(Produto::getAtivo)
@@ -70,7 +77,9 @@ public class ProdutoService {
 
     // ------------------------------------
     // BUSCAR POR NOME
+    // Cache mais específico por nome
     // ------------------------------------
+    @Cacheable(value = "produtosCache", key = "'nome_' + #nome")
     public List<ProdutoResponseDTO> buscarPorNome(String nome) {
         return produtoRepository.findByNomeContainingIgnoreCaseAndAtivoTrue(nome)
                 .stream()
@@ -80,7 +89,9 @@ public class ProdutoService {
 
     // ------------------------------------
     // BUSCAR POR RESTAURANTE
+    // Cache por restaurante
     // ------------------------------------
+    @Cacheable(value = "produtosCache", key = "'rest_' + #restauranteId")
     public List<ProdutoResponseDTO> listarPorRestaurante(Long restauranteId) {
         return produtoRepository.findByRestauranteIdAndAtivoTrue(restauranteId)
                 .stream()
@@ -90,7 +101,9 @@ public class ProdutoService {
 
     // ------------------------------------
     // ATUALIZAR PRODUTO
+    // Atualização sempre invalida o cache
     // ------------------------------------
+    @CacheEvict(value = "produtosCache", allEntries = true)
     public ProdutoResponseDTO atualizar(Long id, ProdutoRequestDTO dto) {
         Produto produto = produtoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
@@ -111,7 +124,9 @@ public class ProdutoService {
 
     // ------------------------------------
     // SOFT DELETE
+    // Limpa todo o cache ao excluir
     // ------------------------------------
+    @CacheEvict(value = "produtosCache", allEntries = true)
     public void excluir(Long id) {
         Produto produto = produtoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
@@ -122,7 +137,9 @@ public class ProdutoService {
 
     // ------------------------------------
     // ALTERAR DISPONIBILIDADE
+    // Também invalida cache
     // ------------------------------------
+    @CacheEvict(value = "produtosCache", allEntries = true)
     public ProdutoResponseDTO alterarDisponibilidade(Long id) {
         Produto produto = produtoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
@@ -133,6 +150,7 @@ public class ProdutoService {
 
     // ------------------------------------
     // VERIFICAR SE RESTAURANTE É DONO
+    // Não precisa de cache (é dinâmico por segurança)
     // ------------------------------------
     public boolean isOwner(Long produtoId) {
 

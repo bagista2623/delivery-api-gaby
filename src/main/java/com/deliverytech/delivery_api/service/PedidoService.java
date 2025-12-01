@@ -15,6 +15,8 @@ import com.deliverytech.delivery_api.security.SecurityUtils;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -43,10 +45,12 @@ public class PedidoService {
     private SecurityUtils securityUtils;
 
 
-
     // ============================================================
     // LISTAR COM FILTROS + PAGINAÇÃO
+    // Cache com chave única baseada nos filtros
     // ============================================================
+    @Cacheable(value = "pedidosCache",
+            key = "'filtros_' + #status + '_' + #dataInicio + '_' + #dataFim + '_' + #page + '_' + #size")
     public Page<PedidoResponseDTO> listarComFiltros(
             String status,
             LocalDate dataInicio,
@@ -88,11 +92,12 @@ public class PedidoService {
     }
 
 
-
     // ============================================================
     // CRIAR PEDIDO
+    // Sempre invalida o cache
     // ============================================================
     @Transactional
+    @CacheEvict(value = "pedidosCache", allEntries = true)
     public PedidoResponseDTO criarPedido(PedidoRequestDTO dto) {
 
         var cliente = clienteRepository.findById(dto.getClienteId())
@@ -118,10 +123,10 @@ public class PedidoService {
     }
 
 
-
     // ============================================================
     // BUSCAR POR ID
     // ============================================================
+    @Cacheable(value = "pedidosCache", key = "#id")
     public Optional<PedidoResponseDTO> buscarPorId(Long id) {
         return pedidoRepository.findById(id)
                 .filter(p -> Boolean.TRUE.equals(p.getAtivo()))
@@ -129,10 +134,10 @@ public class PedidoService {
     }
 
 
-
     // ============================================================
     // BUSCAR POR CLIENTE
     // ============================================================
+    @Cacheable(value = "pedidosCache", key = "'cliente_' + #clienteId")
     public List<PedidoResponseDTO> buscarPedidosPorCliente(Long clienteId) {
         return pedidoRepository.findByClienteIdAndAtivoTrue(clienteId)
                 .stream()
@@ -141,10 +146,10 @@ public class PedidoService {
     }
 
 
-
     // ============================================================
     // BUSCAR POR RESTAURANTE
     // ============================================================
+    @Cacheable(value = "pedidosCache", key = "'restaurante_' + #restauranteId")
     public List<PedidoResponseDTO> buscarPedidosPorRestaurante(Long restauranteId) {
         return pedidoRepository.findByRestauranteIdAndAtivoTrue(restauranteId)
                 .stream()
@@ -153,9 +158,8 @@ public class PedidoService {
     }
 
 
-
     // ============================================================
-    // CALCULAR TOTAL DO PEDIDO
+    // CALCULAR TOTAL DO PEDIDO (não cacheia porque é dinâmico)
     // ============================================================
     public Double calcularTotalPedido(List<ItemPedidoDTO> itens) {
         return itens.stream()
@@ -168,10 +172,10 @@ public class PedidoService {
     }
 
 
-
     // ============================================================
-    // ATUALIZAR STATUS
+    // ATUALIZAR STATUS — invalida cache
     // ============================================================
+    @CacheEvict(value = "pedidosCache", allEntries = true)
     public void atualizarStatusPedido(Long id, String status) {
 
         Pedido pedido = pedidoRepository.findById(id)
@@ -189,10 +193,10 @@ public class PedidoService {
     }
 
 
-
     // ============================================================
-    // CANCELAR PEDIDO
+    // CANCELAR PEDIDO — invalida cache
     // ============================================================
+    @CacheEvict(value = "pedidosCache", allEntries = true)
     public void cancelarPedido(Long id) {
 
         Pedido pedido = pedidoRepository.findById(id)
@@ -205,9 +209,8 @@ public class PedidoService {
     }
 
 
-
     // ============================================================
-    // AUTORIZAÇÃO — VERSÃO SEM ENTREGADOR
+    // AUTORIZAÇÃO (sem cache por segurança)
     // ============================================================
     public boolean canAccess(Long pedidoId) {
 
@@ -218,7 +221,6 @@ public class PedidoService {
                 .orElse(null);
         if (pedido == null) return false;
 
-        // ADMIN pode tudo
         if (user.getRole() == Role.ADMIN) return true;
 
         switch (user.getRole()) {

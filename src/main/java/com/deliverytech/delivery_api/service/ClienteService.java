@@ -4,6 +4,9 @@ import com.deliverytech.delivery_api.dto.ClienteRequestDTO;
 import com.deliverytech.delivery_api.dto.ClienteResponseDTO;
 import com.deliverytech.delivery_api.entity.Cliente;
 import com.deliverytech.delivery_api.repository.ClienteRepository;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,9 +25,10 @@ public class ClienteService {
 
     /**
      * Cadastrar novo cliente (agora recebe DTO)
+     * Invalida todo o cache de clientes
      */
+    @CacheEvict(value = "clientesCache", allEntries = true)
     public ClienteResponseDTO cadastrar(ClienteRequestDTO dto) {
-        // Verifica email duplicado
         if (clienteRepository.existsByEmail(dto.getEmail())) {
             throw new IllegalArgumentException("Email já cadastrado: " + dto.getEmail());
         }
@@ -46,8 +50,10 @@ public class ClienteService {
 
     /**
      * Buscar cliente por ID
+     * Cada cliente tem seu próprio cache
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "clientesCache", key = "#id")
     public Optional<ClienteResponseDTO> buscarPorId(Long id) {
         return clienteRepository.findById(id)
                 .map(ClienteResponseDTO::new);
@@ -55,8 +61,10 @@ public class ClienteService {
 
     /**
      * Buscar cliente por email
+     * Cache separado por email (chave string)
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "clientesCache", key = "'email_' + #email")
     public Optional<ClienteResponseDTO> buscarPorEmail(String email) {
         return clienteRepository.findByEmail(email)
                 .map(ClienteResponseDTO::new);
@@ -64,8 +72,10 @@ public class ClienteService {
 
     /**
      * Listar todos os clientes ativos
+     * Cache para lista completa
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "clientesCache", key = "'ativos'")
     public List<ClienteResponseDTO> listarAtivos() {
         return clienteRepository.findByAtivoTrue()
                 .stream()
@@ -75,7 +85,9 @@ public class ClienteService {
 
     /**
      * Atualizar dados do cliente
+     * Sempre limpa todo o cache
      */
+    @CacheEvict(value = "clientesCache", allEntries = true)
     public ClienteResponseDTO atualizar(Long id, ClienteRequestDTO dto) {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + id));
@@ -96,7 +108,9 @@ public class ClienteService {
 
     /**
      * Inativar cliente (soft delete)
+     * Invalida o cache porque altera dados
      */
+    @CacheEvict(value = "clientesCache", allEntries = true)
     public void inativar(Long id) {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado: " + id));
@@ -107,8 +121,10 @@ public class ClienteService {
 
     /**
      * Buscar clientes por nome
+     * Cache específico para nome
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "clientesCache", key = "'nome_' + #nome")
     public List<ClienteResponseDTO> buscarPorNome(String nome) {
         return clienteRepository.findByNomeContainingIgnoreCase(nome)
                 .stream()

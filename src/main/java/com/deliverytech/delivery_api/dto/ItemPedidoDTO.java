@@ -6,8 +6,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-@Schema(name = "ItemPedidoDTO",
-        description = "Item que compõe um pedido, contendo o produto e a quantidade.")
+@Schema(
+        name = "ItemPedidoDTO",
+        description = "Item que compõe um pedido, contendo o produto e a quantidade."
+)
 public class ItemPedidoDTO {
 
     @NotNull(message = "O ID do produto é obrigatório")
@@ -18,4 +20,16 @@ public class ItemPedidoDTO {
     @Min(value = 1, message = "A quantidade deve ser no mínimo 1")
     @Schema(description = "Quantidade do produto solicitado", example = "2")
     private Integer quantidade;
+
+    // ---------------------------------------------------------------------
+    // 🔥 Construtor necessário para os testes (ex: new ItemPedidoDTO(1L, 2))
+    // ---------------------------------------------------------------------
+    public ItemPedidoDTO(Long produtoId, Integer quantidade) {
+        this.produtoId = produtoId;
+        this.quantidade = quantidade;
+    }
+
+    // Construtor vazio (necessário para JSON e frameworks)
+    public ItemPedidoDTO() {
+    }
 }

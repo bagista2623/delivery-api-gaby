@@ -3,6 +3,7 @@ package com.deliverytech.delivery_api.entity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "restaurantes")
+@Builder
 @Schema(description = "Entidade que representa um restaurante cadastrado na plataforma")
 public class Restaurante {
 

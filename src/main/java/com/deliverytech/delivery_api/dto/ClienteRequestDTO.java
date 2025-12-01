@@ -29,4 +29,14 @@ public class ClienteRequestDTO {
     @NotBlank(message = "O endereço é obrigatório")
     @Schema(description = "Endereço para entrega", example = "Rua das Flores, 123 - Centro")
     private String endereco;
+
+    public ClienteRequestDTO(String nome, String email, String telefone, String endereco) {
+        this.nome = nome;
+        this.email = email;
+        this.telefone = telefone;
+        this.endereco = endereco;
+    }
+
+    // Construtor padrão ainda existe por causa do Lombok (@Data)
+    public ClienteRequestDTO() {}
 }
